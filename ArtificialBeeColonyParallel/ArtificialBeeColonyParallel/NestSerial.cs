@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.Threading;
 
 namespace ArtificialBeeColonyParallel
@@ -6,8 +7,8 @@ namespace ArtificialBeeColonyParallel
     // Serial implementation of ABC algorithm
     internal class NestSerial
     {
-        private Random random; // multipurpose
-        private Timer timer; 
+        private readonly Random random; // multipurpose
+        private readonly Stopwatch watch; 
 
         // probability an active bee will reject a better neighbor food source OR accept worse neighbor food source
 
@@ -32,6 +33,7 @@ namespace ArtificialBeeColonyParallel
             int maxNumberCycles, Data pointsData)
         {
             random = new Random(0);
+            watch = new Stopwatch();
 
             this.totalNumberBees = totalNumberBees;
             this.numberInactive = numberInactive;
@@ -120,10 +122,10 @@ namespace ArtificialBeeColonyParallel
             return result;
         } // GenerateRandomSolution()
 
-        public char[] GenerateNeighbourSolution(char[] memoryMatrix)
+        public char[] GenerateNeighbourSolution(char[] memorizedSolution)
         {
-            var result = new char[memoryMatrix.Length];
-            Array.Copy(memoryMatrix, result, memoryMatrix.Length);
+            var result = new char[memorizedSolution.Length];
+            Array.Copy(memorizedSolution, result, memorizedSolution.Length);
 
             int ranIndex = random.Next(0, result.Length); // [0, Length-1] inclusive
             int adjIndex;
@@ -139,13 +141,13 @@ namespace ArtificialBeeColonyParallel
             return result;
         } // GenerateNeighbourSolution()
 
-        public double MeasureOfQuality(char[] memoryMatrix)
+        public double MeasureOfQuality(char[] solution)
         {
             double answer = 0.0;
-            for (int i = 0; i < memoryMatrix.Length - 1; ++i)
+            for (int i = 0; i < solution.Length - 1; ++i)
             {
-                char c1 = memoryMatrix[i];
-                char c2 = memoryMatrix[i + 1];
+                char c1 = solution[i];
+                char c2 = solution[i + 1];
                 double d = pointsData.Distance(c1, c2);
                 answer += d;
             }
@@ -154,6 +156,7 @@ namespace ArtificialBeeColonyParallel
 
         public void Solve(bool doProgressBar) // find best Traveling Salesman Problem solution
         {
+            watch.Start();
             bool pb = doProgressBar; // just want a shorter variable
             const int numberOfSymbolsToPrint = 10; // 10 units so each symbol is 10.0% progress
             int increment = maxNumberCycles/numberOfSymbolsToPrint;
@@ -180,7 +183,10 @@ namespace ArtificialBeeColonyParallel
                     Console.Write("^");
             } // main while processing loop
 
-            if (pb) Console.WriteLine(""); // end the progress bar
+            if (pb) Console.WriteLine(""); 
+            TimeSpan timespan = watch.Elapsed;
+            Console.WriteLine("\nSERIAL ABC ALGORITHM SPEED : {0}s {1}ms ", timespan.Seconds, timespan.Milliseconds);
+            // end the progress bar
         } // Solve()
 
         private void ProcessInactiveBee(int i)
